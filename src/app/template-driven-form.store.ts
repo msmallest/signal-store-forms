@@ -68,10 +68,8 @@ export const BooksStore = signalStore(
     }
   })),
   withHooks((store) => {
-    const stuff = 'd';
     return {
         onInit() {
-            console.log('init', stuff)
         },
         onDestroy() {
             console.log('onDestroy')
