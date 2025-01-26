@@ -1,8 +1,8 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { AbstractControl, FormControl, FormGroup, NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { signalStore, withComputed, withProps } from '@ngrx/signals';
+import { signalStore, withComputed, withHooks, withProps } from '@ngrx/signals';
 import { withFormState } from './form-data.store.feature';
-import { map } from 'rxjs';
+import { map, tap } from 'rxjs';
 import { AsyncPipe, JsonPipe } from '@angular/common';
 
 type FormType = FormGroup<{
@@ -13,8 +13,13 @@ type FormType = FormGroup<{
 export const ReactiveFormStore = signalStore(
     { providedIn: 'root' },
     withProps(() => {
+        const initialState = {
+            firstName: 'a',
+            lastName: 'b'
+        }
         const fb = inject(NonNullableFormBuilder);
         return {
+            initialState: initialState,
             fb: fb,
             form: fb.group({
                 firstName: fb.control('', [Validators.required]),
@@ -23,6 +28,21 @@ export const ReactiveFormStore = signalStore(
         }
     }),
     withFormState(),
+    withHooks({
+        onInit(store) {
+            store.value$.pipe(
+                tap((v) => {
+                    if (v.firstName === 'test') {
+                        store.form.disable();
+                        console.log('disabling')
+                    } else {
+                        store.form.enable();
+                        console.log('enabling')
+                    }
+                })
+            ).subscribe()
+        }
+    })
 
 )
 @Component({
@@ -37,10 +57,12 @@ export const ReactiveFormStore = signalStore(
 
         <pre>{{formStore.value() | json}}</pre>
         <pre>{{formStore.value$ | async | json}}</pre>
+        <button (click)="formStore.setDefaultValues()">set default</button>
+        <button (click)="formStore.logValues()">log vals</button>
   `,
     styles: ``,
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class WithFormDataFeatureComponent {
-    formStore = inject(ReactiveFormStore)
+    formStore = inject(ReactiveFormStore);
 }

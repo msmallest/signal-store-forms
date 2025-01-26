@@ -1,7 +1,7 @@
 import { Signal } from "@angular/core";
 import { toSignal } from "@angular/core/rxjs-interop";
 import { AbstractControl, ControlEvent, FormControlStatus, PristineChangeEvent, StatusChangeEvent, TouchedChangeEvent, ValueChangeEvent } from "@angular/forms";
-import { deepComputed, patchState, SignalStoreFeature, signalStoreFeature, type, withComputed, withMethods, withProps, withState } from "@ngrx/signals";
+import { deepComputed, patchState, SignalStoreFeature, signalStoreFeature, type, withComputed, withHooks, withMethods, withProps, withState } from "@ngrx/signals";
 import { distinctUntilChanged, filter, map, Observable, of, shareReplay, startWith, tap } from "rxjs";
 
 function isValueEvent<T>(
@@ -30,6 +30,7 @@ export function valueValue$<T>(form: AbstractControl<T>): Observable<T> {
                 JSON.stringify(previous) === JSON.stringify(current),
         ),
         map(() => form.getRawValue()),
+        tap(() => console.log('value hit'))
     )
 }
 
@@ -43,7 +44,8 @@ export function statusEvents$<T>(events: Observable<ControlEvent<T>>) {
 }
 export function statusValue$<T>(form: AbstractControl<T>, events: Observable<ControlEvent<T>>) {
     return statusEvents$(events).pipe(startWith(form.status)).pipe(
-        map(() => form.status)
+        map(() => form.status),
+        tap(() => console.log('status hit'))
     )
 }
 
@@ -57,7 +59,8 @@ export function touchedEvents$<T>(events: Observable<ControlEvent<T>>) {
 }
 export function touchedValue$<T>(form: AbstractControl<T>, events: Observable<ControlEvent<T>>) {
     return touchedEvents$(events).pipe(startWith(form.touched)).pipe(
-        map(() => form.touched)
+        map(() => form.touched),
+        tap(() => console.log('touched hit'))
     )
 }
 
@@ -71,7 +74,8 @@ export function pristineEvents$<T>(events: Observable<ControlEvent<T>>) {
 }
 export function pristineValue$<T>(form: AbstractControl<T>, events: Observable<ControlEvent<T>>) {
     return pristineEvents$(events).pipe(startWith(form.pristine)).pipe(
-        map(() => form.pristine)
+        map(() => form.pristine),
+        tap(() => console.log('pristine hit'))
     )
 }
 
@@ -85,9 +89,10 @@ type FormValues<TValue = any> = {
 export function withFormState<T, U extends T>() {
     return signalStoreFeature(
         {
-          props: type<{ form: AbstractControl<T> }>(),
+          props: type<{ form: AbstractControl<T>, initialState: U }>(),
         },
-        withProps(({form}) => {
+        withProps(({form, initialState}) => {
+            console.log(initialState)
             const formEvents = form.events.pipe(
                 shareReplay(1)
             );
@@ -116,5 +121,22 @@ export function withFormState<T, U extends T>() {
                 value: _tempDeep
             }
         }),
+        withMethods((store) => ({
+            setDefaultValues() {
+                if (store.initialState) {
+                    store.form.setValue(store.initialState)
+                } else {
+                    console.log('must provide initialState')
+                }
+            },
+            logValues() {
+                console.log({
+                    value: store.form.value,
+                    status: store.form.status,
+                    touched: store.form.touched,
+                    dirty: store.form.dirty,
+                })
+            }
+        })),
     )
 }
