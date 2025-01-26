@@ -7,12 +7,14 @@ import { patchState } from '@ngrx/signals';
 import { ReactiveFormStore } from './reactive-forms.store';
 import { ReactiveFormsArrayComponent } from "./reactive-forms-array.component";
 import { FormEventsProfilerTestComponent } from "./form-events-profiler-test.component";
+import { ProfilerSingularEventsComponent } from "./profiler-singular-events.component";
 
 @Component({
   selector: 'app-root',
-  imports: [JsonPipe, FormsModule, ReactiveFormsModule, ReactiveFormsArrayComponent, FormEventsProfilerTestComponent],
+  imports: [JsonPipe, FormsModule, ReactiveFormsModule, ReactiveFormsArrayComponent, FormEventsProfilerTestComponent, ProfilerSingularEventsComponent],
   template: `
-    <app-form-events-profiler-test />
+  <app-profiler-singular-events />
+    <!-- <app-form-events-profiler-test />
   <hr />
     <app-reactive-forms-array />
 
@@ -22,7 +24,7 @@ import { FormEventsProfilerTestComponent } from "./form-events-profiler-test.com
         <input [(ngModel)]="form.firstName" name="firstName" required/>
         <input [(ngModel)]="form.lastName" name="lastName"/>
         <input [(ngModel)]="form.signedTOS" type="checkbox" name="signedTOS"/>
-    </form>
+    </form> -->
     
     <!-- <pre>{{form.firstName() | json}}</pre>
     <pre>{{form.lastName() | json}}</pre>
@@ -47,22 +49,22 @@ export class AppComponent {
 
     form = this.bookStore.form;
 
-    formData = viewChild.required<NgForm>('myForm');
+    // formData = viewChild.required<NgForm>('myForm');
 
-    syncNgFormMetadataEffect = effect(() => {
-        this.formData().form.events.pipe(
-            tap(() => {
-                console.log(this.formData().form)
-            })
-        ).subscribe()
+    // syncNgFormMetadataEffect = effect(() => {
+    //     this.formData().form.events.pipe(
+    //         tap(() => {
+    //             console.log(this.formData().form)
+    //         })
+    //     ).subscribe()
 
-        this.formData().form.statusChanges.pipe(
-            tap((s) => {
-                const _valid = s === 'VALID';
-                this.bookStore.setValidity(_valid)
-            })
-        ).subscribe()
-    })
+    //     this.formData().form.statusChanges.pipe(
+    //         tap((s) => {
+    //             const _valid = s === 'VALID';
+    //             this.bookStore.setValidity(_valid)
+    //         })
+    //     ).subscribe()
+    // })
 
     reactiveStore = inject(ReactiveFormStore)
     reactiveForm = this.reactiveStore.form;

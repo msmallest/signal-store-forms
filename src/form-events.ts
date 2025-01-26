@@ -24,7 +24,7 @@ import {
   tap,
 } from 'rxjs';
 
-function valueEvents$<T>(form: AbstractControl<T>) {
+export function valueEvents$<T>(form: AbstractControl<T>) {
   return form.events.pipe(
     filter(
       (event: ControlEvent): event is ValueChangeEvent<typeof form.value> =>
@@ -32,14 +32,30 @@ function valueEvents$<T>(form: AbstractControl<T>) {
     )
   );
 }
+export function valueValue$<T>(form: AbstractControl<T>) {
+    return valueEvents$(form).pipe(
+        startWith(form.getRawValue()),
+        map((value) => (isValueEvent(value) ? value.value : value)),
+        distinctUntilChanged(
+            (previous, current) =>
+                JSON.stringify(previous) === JSON.stringify(current),
+        ),
+        map(() => form.getRawValue())
+    )
+}
 
-function statusEvents$<T>(form: AbstractControl<T>) {
+export function statusEvents$<T>(form: AbstractControl<T>) {
   return form.events.pipe(
     filter(
       (event: ControlEvent): event is StatusChangeEvent =>
         event instanceof StatusChangeEvent
     )
   );
+}
+export function statusValue$<T>(form: AbstractControl<T>) {
+    return statusEvents$(form).pipe(startWith(form.status)).pipe(
+        map(() => form.status)
+    )
 }
 
 export function touchedEvents$<T>(form: AbstractControl<T>) {
@@ -50,14 +66,24 @@ export function touchedEvents$<T>(form: AbstractControl<T>) {
     )
   );
 }
+export function touchedValue$<T>(form: AbstractControl<T>) {
+    return touchedEvents$(form).pipe(startWith(form.touched)).pipe(
+        map(() => form.touched)
+    )
+}
 
-function pristineEvents$<T>(form: AbstractControl<T>) {
+export function pristineEvents$<T>(form: AbstractControl<T>) {
     return form.events.pipe(
     filter(
         (event: ControlEvent): event is PristineChangeEvent =>
           event instanceof PristineChangeEvent
     )
   );
+}
+export function pristineValue$<T>(form: AbstractControl<T>) {
+    return pristineEvents$(form).pipe(startWith(form.pristine)).pipe(
+        map(() => form.pristine)
+    )
 }
 
 function isValueEvent<T>(
