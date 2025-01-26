@@ -29,7 +29,7 @@ export function valueEvents$<T>(form: AbstractControl<T>) {
     filter(
       (event: ControlEvent): event is ValueChangeEvent<typeof form.value> =>
         event instanceof ValueChangeEvent
-    )
+    ),
   );
 }
 export function valueValue$<T>(form: AbstractControl<T>) {
@@ -40,7 +40,8 @@ export function valueValue$<T>(form: AbstractControl<T>) {
             (previous, current) =>
                 JSON.stringify(previous) === JSON.stringify(current),
         ),
-        map(() => form.getRawValue())
+        map(() => form.getRawValue()),
+        tap((e) => console.log('val event', e))
     )
 }
 

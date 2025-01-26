@@ -1,26 +1,35 @@
 import { AsyncPipe, JsonPipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
-import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { ControlEvent, FormResetEvent, FormSubmittedEvent, NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { pristineValue$, statusEvents$, statusValue$, touchedValue$, valueEvents$, valueValue$ } from '../form-events';
-import { tap } from 'rxjs';
+import { filter, tap } from 'rxjs';
 
 @Component({
-  selector: 'app-profiler-singular-events',
-  imports: [ReactiveFormsModule, JsonPipe, AsyncPipe],
-  template: `
+    selector: 'app-profiler-singular-events',
+    imports: [ReactiveFormsModule, JsonPipe, AsyncPipe],
+    template: `
      <form [formGroup]="personForm">
         <input formControlName="firstName" />
         <input formControlName="lastName" />
+
+        <button (click)="personForm.controls.firstName.setValue('')" type="button">Reset first name</button>
+        <button (click)="personForm.reset()" type="reset">Reset all</button>
+        <button (click)="resetForm()" type="reset">Reset all, programatic</button>
+        <button type="submit">Submit</button>
+
+        <button (click)="personForm.controls.firstName.enable()" type="button">Enable</button>
     </form>
-    <button (click)="personForm.controls.firstName.setValue('')">Reset first name</button>
+
+    <pre>firstName.disabled {{personForm.controls.firstName.disabled}}</pre>
+
 
     <pre>pristine$ {{pristine$ | async}}</pre>
     <pre>touched$ {{touched$ | async}}</pre>
-    <pre>value$ {{value$ | async | json}}</pre>
+    <!-- <pre>value$ {{value$ | async | json}}</pre> -->
     <pre>status$ {{status$ | async}}</pre>
   `,
-  styles: ``,
-  changeDetection: ChangeDetectionStrategy.OnPush
+    styles: ``,
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class ProfilerSingularEventsComponent {
     fb = inject(NonNullableFormBuilder);
@@ -34,17 +43,38 @@ export class ProfilerSingularEventsComponent {
     value$ = valueValue$(this.personForm);
     status$ = statusValue$(this.personForm);
 
-    ngOnInit() {
+    resetForm() {
+        this.personForm.reset()
+    }
+
+    ngOnInit() {        
         this.value$.pipe(
             tap((v) => {
-                console.log(v);
+                console.log(v)
                 if (v.firstName === 'test') {
-                    this.personForm.controls.firstName.disable()
+                    console.log('disabling')
+                    this.personForm.controls.firstName.disable({emitEvent: false})
                 } else {
                     console.log('enabling')
-                    this.personForm.controls.firstName.enable()
+                    this.personForm.controls.firstName.enable({emitEvent: false})
                 }
             })
+        ).subscribe()
+
+        this.personForm.events.pipe(
+            filter(
+                (event: ControlEvent): event is FormResetEvent =>
+                    event instanceof FormResetEvent
+            ),
+            tap(() => console.log('reset event'))
+        ).subscribe()
+
+        this.personForm.events.pipe(
+            filter(
+                (event: ControlEvent): event is FormSubmittedEvent =>
+                    event instanceof FormSubmittedEvent
+            ),
+            tap(() => console.log('submit event'))
         ).subscribe()
     }
 }

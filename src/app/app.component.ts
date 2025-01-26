@@ -8,12 +8,14 @@ import { ReactiveFormStore } from './reactive-forms.store';
 import { ReactiveFormsArrayComponent } from "./reactive-forms-array.component";
 import { FormEventsProfilerTestComponent } from "./form-events-profiler-test.component";
 import { ProfilerSingularEventsComponent } from "./profiler-singular-events.component";
+import { WithFormDataFeatureComponent } from "./with-form-data-feature.component";
 
 @Component({
   selector: 'app-root',
-  imports: [JsonPipe, FormsModule, ReactiveFormsModule, ReactiveFormsArrayComponent, FormEventsProfilerTestComponent, ProfilerSingularEventsComponent],
+  imports: [JsonPipe, FormsModule, ReactiveFormsModule, ReactiveFormsArrayComponent, FormEventsProfilerTestComponent, ProfilerSingularEventsComponent, WithFormDataFeatureComponent],
   template: `
-  <app-profiler-singular-events />
+  <app-with-form-data-feature />
+  <!-- <app-profiler-singular-events /> -->
     <!-- <app-form-events-profiler-test />
   <hr />
     <app-reactive-forms-array />
