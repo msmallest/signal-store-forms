@@ -144,7 +144,6 @@ export function allEventsObservable<T>(
 		]).pipe(
 			map(([valueParam, statusParam, touchedParam, pristineParam]) => {
 				// Original values (plus value)
-                console.log('hit')
 				const stat: FormControlStatus | StatusChangeEvent = isStatusEvent(
 					statusParam,
 				)

@@ -30,7 +30,7 @@ export function valueValue$<T>(form: AbstractControl<T>): Observable<T> {
                 JSON.stringify(previous) === JSON.stringify(current),
         ),
         map(() => form.getRawValue()),
-        tap(() => console.log('value hit'))
+        // tap(() => console.log('value hit'))
     )
 }
 
@@ -45,7 +45,7 @@ export function statusEvents$<T>(events: Observable<ControlEvent<T>>) {
 export function statusValue$<T>(form: AbstractControl<T>, events: Observable<ControlEvent<T>>) {
     return statusEvents$(events).pipe(startWith(form.status)).pipe(
         map(() => form.status),
-        tap(() => console.log('status hit'))
+        // tap(() => console.log('status hit'))
     )
 }
 
@@ -60,7 +60,7 @@ export function touchedEvents$<T>(events: Observable<ControlEvent<T>>) {
 export function touchedValue$<T>(form: AbstractControl<T>, events: Observable<ControlEvent<T>>) {
     return touchedEvents$(events).pipe(startWith(form.touched)).pipe(
         map(() => form.touched),
-        tap(() => console.log('touched hit'))
+        // tap(() => console.log('touched hit'))
     )
 }
 
@@ -75,7 +75,7 @@ export function pristineEvents$<T>(events: Observable<ControlEvent<T>>) {
 export function pristineValue$<T>(form: AbstractControl<T>, events: Observable<ControlEvent<T>>) {
     return pristineEvents$(events).pipe(startWith(form.pristine)).pipe(
         map(() => form.pristine),
-        tap(() => console.log('pristine hit'))
+        // tap(() => console.log('pristine hit'))
     )
 }
 

@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, inject, linkedSignal, signal } from '@angular/core';
-import { FormControl, FormGroup, FormsModule, NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { AbstractControl, FormControl, FormGroup, FormsModule, NonNullableFormBuilder, ReactiveFormsModule, ValidationErrors, ValidatorFn, Validators } from '@angular/forms';
 import { signalStore, withHooks, withProps } from '@ngrx/signals';
 import { withFormState } from '../../form-data.store.feature';
 import { tap } from 'rxjs';
@@ -7,6 +7,7 @@ import { JsonPipe } from '@angular/common';
 import {MatFormFieldModule} from '@angular/material/form-field';
 import {MatInputModule} from '@angular/material/input';
 import { ChildComponent } from "./child.component";
+import { rxEffect } from 'ngxtension/rx-effect';
 
 export const ReactiveFormStore = signalStore(
     { providedIn: 'root' },
@@ -47,22 +48,32 @@ export const ReactiveFormStore = signalStore(
             store.initialState.books.forEach(book => store.form.controls.books.push(store.fb.group({title: book.title})))
             store.setDefaultValues()
 
-            store.value$.pipe(
-                tap((value) => {
+            const books = store.form.controls.books;
+
+            // validators: TODO - look at this library for reactive forms depend on others https://github.com/DmitryEfimenko/ngspot/tree/main/packages/ngx-errors/package
+
+            const noBooksForNate = rxEffect(
+                store.value$,
+                (value) => {
                     const books = store.form.controls.books;
                     if (value.firstName === 'Nate') {
                         books.disable()
                     } else {
                         books.enable()
                     }
+                }
+            )
 
+            const badBookDisabled = rxEffect(
+                store.value$,
+                (value) => {
                     books.controls.forEach(book => {
                         if (book.getRawValue().title === 'bad') {
                             book.disable({emitEvent: false})
                         }
                     })
-                })
-            ).subscribe()
+                } 
+            )
         }
     })
 
@@ -83,7 +94,7 @@ export const ReactiveFormStore = signalStore(
         </mat-form-field>
 
         @for (book of form.controls.books.controls; track $index) {
-            <app-child [index]="$index" />
+            <app-child [index]="$index" (delete)="onDelete($event)" [myProps]="stuff[$index]" />
         }
     </form>
 
@@ -107,5 +118,11 @@ export class ParentComponent {
     form = this.formStore.form;
     fb = this.formStore.fb;
 
+    stuff = ['a', 'b', 'c', 'd']
+
     newBook = linkedSignal(() => 'new')
+
+    onDelete(index: number) {
+        this.form.controls.books.removeAt(index)
+    }
 }
