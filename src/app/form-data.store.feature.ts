@@ -80,9 +80,9 @@ export function pristineValue$<T>(form: AbstractControl<T>, events: Observable<C
 }
 
 type FormValues<TValue = any> = {
-    pristine$: Observable<boolean>, 
-    touched$: Observable<boolean>, 
-    value$: Observable<TValue>, 
+    pristine$: Observable<boolean>,
+    touched$: Observable<boolean>,
+    value$: Observable<TValue>,
     status$: Observable<FormControlStatus>
 }
 
@@ -92,27 +92,76 @@ export function withFormState<T, U extends T>() {
           props: type<{ form: AbstractControl<T>, initialState: U }>(),
         },
         withProps(({form, initialState}) => {
-            console.log(initialState)
             const formEvents = form.events.pipe(
                 shareReplay(1)
             );
 
-            const _pristine$ = pristineValue$(form, formEvents);
-            const _touched$ = touchedValue$(form, formEvents);
-            const _value$ = valueValue$<ReturnType<typeof form.getRawValue>>(form);
-            const _status$ = statusValue$(form, formEvents);
+            const _pristine$ = pristineValue$(form, formEvents).pipe(
+              shareReplay(1)
+            );
+            const _touched$ = touchedValue$(form, formEvents).pipe(
+              shareReplay(1)
+            );
+            const _value$ = valueValue$<ReturnType<typeof form.getRawValue>>(form).pipe(
+              shareReplay(1)
+            );;
+            const _status$ = statusValue$(form, formEvents).pipe(
+              shareReplay(1)
+            );
 
+            // derived
+
+            const _valid$ = _status$.pipe(
+              map((s) => s === 'VALID')
+            )
+            const _invalid$ = _status$.pipe(
+              map((s) => s === 'INVALID')
+            )
+            const _pending$ = _status$.pipe(
+              map((s) => s === 'PENDING')
+            )
+            const _disabled$ = _status$.pipe(
+              map((s) => s === 'DISABLED')
+            )
+
+            const _dirty$ = _pristine$.pipe(
+              map(d => !d)
+            )
+            const _untouched$ = _touched$.pipe(
+              map(t => !t)
+            )
+
+            // Submitted/reset probably done on case by case basis but maybe do-able in here
             return {
-                pristine$: _pristine$,
-                touched$: _touched$,
+                // Value needs to be handled special in the next `withProps`
                 _value$: _value$,
+                // Status and derived values
                 status$: _status$,
+                status: toSignal(_status$, {initialValue: form.status}),
+                valid$: _valid$,
+                valid: toSignal(_valid$, {initialValue: form.valid}),
+                invalid$: _invalid$,
+                invalid: toSignal(_invalid$, {initialValue: form.invalid}),
+                pending$: _pending$,
+                pending: toSignal(_pending$, {initialValue: form.pending}),
+                disabled$: _disabled$,
+                disabled: toSignal(_disabled$, {initialValue: form.disabled}),
+                // Pristine and dirty
+                pristine$: _pristine$,
                 pristine: toSignal(_pristine$, {initialValue: form.pristine}),
+                dirty$: _dirty$,
+                dirty: toSignal(_dirty$, {initialValue: form.dirty}),
+                // Touched/untouched
+                touched$: _touched$,
                 touched: toSignal(_touched$, {initialValue: form.touched}),
-                status: toSignal(_status$, {initialValue: form.status})
+                untouched$: _untouched$,
+                untouched: toSignal(_untouched$, {initialValue: form.untouched})
             }
         }),
         withProps((store) => {
+            // Forms are near-impossible to type non nullably in an abstract with AbstractControl because typing came too late.
+            // Our form builders will always be non-nullable, but the typing of that is not a public API.
+            // These typings cheese the values to be typed as they should be
             const _temp$ = store._value$ as Observable<Required<U>>;
             const _temp = toSignal(store._value$, {initialValue: store.form.getRawValue()}) as Signal<Required<U>>;
             const _tempDeep = deepComputed(() => _temp())
@@ -126,10 +175,12 @@ export function withFormState<T, U extends T>() {
                 if (store.initialState) {
                     store.form.setValue(store.initialState)
                 } else {
+                    // TODO - dev check
                     console.log('must provide initialState')
                 }
             },
             logValues() {
+                // TODO - add all derived states
                 console.log({
                     value: store.form.value,
                     status: store.form.status,
