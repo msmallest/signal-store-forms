@@ -2,7 +2,8 @@ import { Signal } from "@angular/core";
 import { toSignal } from "@angular/core/rxjs-interop";
 import { AbstractControl, ControlEvent, FormControlStatus, PristineChangeEvent, StatusChangeEvent, TouchedChangeEvent, ValueChangeEvent } from "@angular/forms";
 import { deepComputed, patchState, SignalStoreFeature, signalStoreFeature, type, withComputed, withHooks, withMethods, withProps, withState } from "@ngrx/signals";
-import { distinctUntilChanged, filter, map, Observable, of, shareReplay, startWith, tap } from "rxjs";
+import { rxEffect } from "ngxtension/rx-effect";
+import { distinctUntilChanged, filter, map, Observable, of, pairwise, shareReplay, startWith, Subject, tap } from "rxjs";
 
 function isValueEvent<T>(
     event: ControlEvent | T
@@ -167,7 +168,8 @@ export function withFormState<T, U extends T>() {
             const _tempDeep = deepComputed(() => _temp())
             return {
                 value$: store._value$ as unknown as typeof _temp$,
-                value: _tempDeep
+                value: _tempDeep,
+                formChangeForceCDR$: new Subject<void>()
             }
         }),
         withMethods((store) => ({
@@ -189,5 +191,16 @@ export function withFormState<T, U extends T>() {
                 })
             }
         })),
+        withHooks((store) => ({
+            onInit() {
+                const change = rxEffect(
+                    store.value$.pipe(
+                        tap(() => {
+                            store.formChangeForceCDR$.next()
+                        })
+                    )
+                )
+            }
+        }))
     )
 }

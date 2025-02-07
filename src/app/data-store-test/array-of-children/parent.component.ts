@@ -1,8 +1,8 @@
-import { ChangeDetectionStrategy, Component, inject, linkedSignal, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, effect, inject, linkedSignal, signal } from '@angular/core';
 import { AbstractControl, FormControl, FormGroup, FormsModule, NonNullableFormBuilder, ReactiveFormsModule, ValidationErrors, ValidatorFn, Validators } from '@angular/forms';
 import { signalStore, withHooks, withProps } from '@ngrx/signals';
 import { withFormState } from '../../form-data.store.feature';
-import { tap } from 'rxjs';
+import { map, pairwise, Subject, tap } from 'rxjs';
 import { JsonPipe } from '@angular/common';
 import {MatFormFieldModule} from '@angular/material/form-field';
 import {MatInputModule} from '@angular/material/input';
@@ -22,15 +22,10 @@ export const ReactiveFormStore = signalStore(
             firstName: 'Michael',
             lastName: 'Small',
             books: [
-                {title: 'Book 1'}
+                {title: 'new'}
             ],
         }
         const fb = inject(NonNullableFormBuilder);
-        const c = fb.group({
-            firstName: fb.control('', [Validators.required]),
-            lastName: fb.control(''),
-            books: fb.array<FormGroup<{title: FormControl<string>}>>([])
-        }).getRawValue()
 
         return {
             initialState: initialState,
@@ -39,7 +34,7 @@ export const ReactiveFormStore = signalStore(
                 firstName: fb.control('', [Validators.required]),
                 lastName: fb.control(''),
                 books: fb.array<FormGroup<{title: FormControl<string>}>>([])
-            })
+            }),
         }
     }),
     withFormState(),
@@ -94,7 +89,7 @@ export const ReactiveFormStore = signalStore(
         </mat-form-field>
 
         @for (book of form.controls.books.controls; track $index) {
-            <app-child [index]="$index" (delete)="onDelete($event)" [myProps]="stuff[$index]" />
+            <app-child [index]="$index" (delete)="onDelete($event)" />
         }
     </form>
 
@@ -111,7 +106,7 @@ export const ReactiveFormStore = signalStore(
         display: inline-block;
     }
   `,
-  changeDetection: ChangeDetectionStrategy.OnPush
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ParentComponent {
     formStore = inject(ReactiveFormStore);
