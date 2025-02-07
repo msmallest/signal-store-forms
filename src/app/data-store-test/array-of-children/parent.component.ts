@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, inject, linkedSignal, signal } from '@angular/core';
 import { AbstractControl, FormControl, FormGroup, FormsModule, NonNullableFormBuilder, ReactiveFormsModule, ValidationErrors, ValidatorFn, Validators } from '@angular/forms';
-import { signalStore, withHooks, withProps } from '@ngrx/signals';
+import {signalStore, withHooks, withMethods, withProps} from '@ngrx/signals';
 import { withFormState } from '../../form-data.store.feature';
 import { tap } from 'rxjs';
 import { JsonPipe } from '@angular/common';
@@ -26,11 +26,6 @@ export const ReactiveFormStore = signalStore(
             ],
         }
         const fb = inject(NonNullableFormBuilder);
-        const c = fb.group({
-            firstName: fb.control('', [Validators.required]),
-            lastName: fb.control(''),
-            books: fb.array<FormGroup<{title: FormControl<string>}>>([])
-        }).getRawValue()
 
         return {
             initialState: initialState,
@@ -43,6 +38,12 @@ export const ReactiveFormStore = signalStore(
         }
     }),
     withFormState(),
+    withMethods((store) => ({
+      disableAt(index: number) {
+        store.form.controls.books.at(index).disable();
+        console.log(store.form.controls.books.at(index))
+      }
+    })),
     withHooks({
         onInit(store) {
             store.initialState.books.forEach(book => store.form.controls.books.push(store.fb.group({title: book.title})))
@@ -72,7 +73,7 @@ export const ReactiveFormStore = signalStore(
                             book.disable({emitEvent: false})
                         }
                     })
-                } 
+                }
             )
         }
     })
@@ -94,7 +95,7 @@ export const ReactiveFormStore = signalStore(
         </mat-form-field>
 
         @for (book of form.controls.books.controls; track $index) {
-            <app-child [index]="$index" (delete)="onDelete($event)" [myProps]="stuff[$index]" />
+            <app-child [index]="$index" (delete)="onDelete($event)" [form]="book"/>
         }
     </form>
 

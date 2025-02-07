@@ -2,7 +2,8 @@ import { Signal } from "@angular/core";
 import { toSignal } from "@angular/core/rxjs-interop";
 import { AbstractControl, ControlEvent, FormControlStatus, PristineChangeEvent, StatusChangeEvent, TouchedChangeEvent, ValueChangeEvent } from "@angular/forms";
 import { deepComputed, patchState, SignalStoreFeature, signalStoreFeature, type, withComputed, withHooks, withMethods, withProps, withState } from "@ngrx/signals";
-import { distinctUntilChanged, filter, map, Observable, of, shareReplay, startWith, tap } from "rxjs";
+import {distinctUntilChanged, filter, map, Observable, of, shareReplay, startWith, Subject, tap} from "rxjs";
+import {rxEffect} from 'ngxtension/rx-effect';
 
 function isValueEvent<T>(
     event: ControlEvent | T
@@ -167,13 +168,14 @@ export function withFormState<T, U extends T>() {
             const _tempDeep = deepComputed(() => _temp())
             return {
                 value$: store._value$ as unknown as typeof _temp$,
-                value: _tempDeep
+                value: _tempDeep,
+                formChangeForceCDR$: new Subject<void>()
             }
         }),
         withMethods((store) => ({
             setDefaultValues() {
                 if (store.initialState) {
-                    store.form.setValue(store.initialState)
+                    store.form.patchValue(store.initialState)
                 } else {
                     // TODO - dev check
                     console.log('must provide initialState')
@@ -187,7 +189,18 @@ export function withFormState<T, U extends T>() {
                     touched: store.form.touched,
                     dirty: store.form.dirty,
                 })
-            }
+            },
         })),
+      withHooks((store) => ({
+        onInit() {
+          const change = rxEffect(
+            store.value$.pipe(
+              tap(() => {
+                store.formChangeForceCDR$.next()
+              })
+            )
+          )
+        }
+      }))
     )
 }
