@@ -52,5 +52,6 @@ export class AltChildComponent{
     this.formService.disableAt(this.index())
   }
 
-  value = computed(() => this.formService.value()?.books.at(this.index()));
+  // value = computed(() => this.formService.value().books.at(this.index()));
+  value = computed(() => this.formService.value.books().at(this.index()));
 }
