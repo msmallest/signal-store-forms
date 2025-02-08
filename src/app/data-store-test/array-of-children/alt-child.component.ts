@@ -50,6 +50,8 @@ export class AltChildComponent{
   disableIt() {
     console.log(this.index())
     this.formService.disableAt(this.index())
+
+    this.formService.num.set(5)
   }
 
   // value = computed(() => this.formService.value().books.at(this.index()));

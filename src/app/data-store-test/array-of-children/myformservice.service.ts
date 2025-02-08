@@ -1,8 +1,8 @@
-import {effect, inject, Injectable} from '@angular/core';
+import {effect, inject, Injectable, signal} from '@angular/core';
 import {FormControl, FormGroup, NonNullableFormBuilder, Validators} from '@angular/forms';
 import {map, startWith} from 'rxjs';
 import {toSignal} from '@angular/core/rxjs-interop';
-import {deepComputed} from '@ngrx/signals';
+import {deepComputed, signalMethod} from '@ngrx/signals';
 import {rxMethod} from '@ngrx/signals/rxjs-interop';
 import {rxEffect} from 'ngxtension/rx-effect';
 
@@ -41,7 +41,16 @@ import {rxEffect} from 'ngxtension/rx-effect';
     this.form.controls.books.at(index).disable();
   }
 
+  readonly logDoubledNumber = signalMethod<number>((num) => {
+    const double = num * 2;
+    console.log(double);
+  });
+
+  num = signal(1)
+
   constructor() {
+    this.logDoubledNumber(this.num);
+
     this.form.controls.books.push(this.fb.group({title: 'test'}))
     // Effect
     const disable = effect(() => {
